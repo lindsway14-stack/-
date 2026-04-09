@@ -17,3 +17,14 @@
 body {
   @apply bg-[#F5F5F0] text-[#2C2C2C] font-sans;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #8B4513;
+  border-radius: 10px;
+}

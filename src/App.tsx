@@ -10,10 +10,117 @@ import {
   Ticket, 
   ChevronRight, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  BookOpen,
+  Award,
+  History
 } from 'lucide-react';
+import { mathematicians, Mathematician } from './data';
 
 // --- Components ---
+
+const BioModal = ({ mathematician, onClose }: { mathematician: Mathematician | null, onClose: () => void }) => {
+  const [activeTab, setActiveTab] = useState<'bio' | 'science' | 'legacy'>('bio');
+
+  if (!mathematician) return null;
+
+  // Split bio into sections for tabs (simulated for now based on the long text)
+  const sections = {
+    bio: mathematician.fullBio.split('\n\n').slice(0, 3).join('\n\n'),
+    science: mathematician.fullBio.split('\n\n').slice(3, 5).join('\n\n'),
+    legacy: mathematician.fullBio.split('\n\n').slice(5).join('\n\n')
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div 
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          className="bg-[#F5F5F0] w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-sm flex flex-col md:flex-row shadow-2xl"
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        >
+          {/* Sidebar / Image */}
+          <div className="w-full md:w-1/3 bg-[#1a1a1a] relative overflow-hidden shrink-0">
+            <img 
+              src={mathematician.img} 
+              alt={mathematician.title} 
+              className="w-full h-full object-cover opacity-80 grayscale hover:grayscale-0 transition-all duration-1000"
+              referrerPolicy="no-referrer"
+              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                e.currentTarget.src = `https://picsum.photos/seed/${mathematician.id}/800/1200?grayscale`;
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent"></div>
+            <div className="absolute bottom-8 left-8 right-8">
+              <span className="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest mb-2 block">{mathematician.cat}</span>
+              <h2 className="font-serif text-3xl text-white mb-2">{mathematician.title}</h2>
+              <p className="text-white/40 text-xs font-serif italic">{mathematician.years}</p>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-6 md:p-10 flex justify-between items-center border-b border-black/5">
+              <div className="flex gap-6">
+                <button 
+                  onClick={() => setActiveTab('bio')}
+                  className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 pb-2 border-b-2 transition-all ${activeTab === 'bio' ? 'border-[#8B4513] text-[#8B4513]' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                >
+                  <History size={14} /> Биография
+                </button>
+                <button 
+                  onClick={() => setActiveTab('science')}
+                  className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 pb-2 border-b-2 transition-all ${activeTab === 'science' ? 'border-[#8B4513] text-[#8B4513]' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                >
+                  <Award size={14} /> Вклад в науку
+                </button>
+                <button 
+                  onClick={() => setActiveTab('legacy')}
+                  className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 pb-2 border-b-2 transition-all ${activeTab === 'legacy' ? 'border-[#8B4513] text-[#8B4513]' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                >
+                  <BookOpen size={14} /> Наследие
+                </button>
+              </div>
+              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="prose prose-stone max-w-none"
+              >
+                <p className="text-lg leading-relaxed text-black/80 font-serif whitespace-pre-line">
+                  {sections[activeTab as keyof typeof sections]}
+                </p>
+              </motion.div>
+            </div>
+            
+            <div className="p-6 border-t border-black/5 bg-black/5 flex justify-end">
+              <button 
+                onClick={onClose}
+                className="text-xs font-bold uppercase tracking-widest px-6 py-3 bg-[#1a1a1a] text-white hover:bg-[#333] transition-colors rounded-sm"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -94,7 +201,7 @@ const Footer = () => (
   </footer>
 );
 
-const HomePage = () => {
+const HomePage = ({ onSelect }: { onSelect: (m: Mathematician) => void }) => {
   return (
     <div>
       {/* Hero Section */}
@@ -203,27 +310,12 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {[
-              { 
-                title: "Николай Лобачевский", 
-                desc: "Гениальный создатель неевклидовой геометрии, которую называли «воображаемой». Его идеи опередили время на десятилетия, перевернув представления о пространстве и заложив основу для теории относительности Эйнштейна. Более 20 лет он возглавлял Казанский университет, превратив его в один из лучших научных центров Европы.", 
-                img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Nikolai_Lobachevsky.jpg/440px-Nikolai_Lobachevsky.jpg" 
-              },
-              { 
-                title: "Софья Ковалевская", 
-                desc: "Первая в мире женщина — профессор математики и член-корреспондент Петербургской академии наук. Она доказала важнейшую теорему Коши-Ковалевской и решила сложнейшую задачу о вращении тяжелого твердого тела вокруг неподвижной точки, за что получила премию Парижской академии наук. Ее жизнь стала символом борьбы женщин за право заниматься наукой.", 
-                img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Sofia_Kovalevskaya.jpg/440px-Sofia_Kovalevskaya.jpg" 
-              },
-              { 
-                title: "Пафнутий Чебышёв", 
-                desc: "Основатель знаменитой Петербургской математической школы. Его работы по теории чисел, теории вероятностей и теории механизмов признаны классическими. Он создал теорию наилучшего приближения функций и сконструировал более 40 уникальных механизмов, включая знаменитую «стопоходящую машину», имитирующую движение животного.", 
-                img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Chebyshev.jpg/440px-Chebyshev.jpg" 
-              }
-            ].map((ex, i) => (
+            {mathematicians.slice(0, 3).map((ex, i) => (
               <motion.div 
                 key={i}
                 whileHover={{ y: -10 }}
                 className="group cursor-pointer"
+                onClick={() => onSelect(ex)}
               >
                 <div className="aspect-[3/4] overflow-hidden rounded-sm mb-8 relative bg-stone-100">
                   <img 
@@ -231,11 +323,14 @@ const HomePage = () => {
                     alt={ex.title} 
                     className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
                     referrerPolicy="no-referrer"
+                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                      e.currentTarget.src = `https://picsum.photos/seed/${ex.id}/800/1200?grayscale`;
+                    }}
                   />
                   <div className="absolute inset-0 border border-black/10 group-hover:border-[#D4AF37]/50 transition-colors"></div>
                 </div>
                 <h3 className="font-serif text-2xl mb-4 uppercase tracking-tight">{ex.title}</h3>
-                <p className="text-sm opacity-60 leading-relaxed font-serif italic">{ex.desc}</p>
+                <p className="text-sm opacity-60 leading-relaxed font-serif italic line-clamp-4">{ex.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -245,7 +340,7 @@ const HomePage = () => {
   );
 };
 
-const ExhibitsPage = () => {
+const ExhibitsPage = ({ onSelect }: { onSelect: (m: Mathematician) => void }) => {
   return (
     <div className="pt-32 pb-20 px-6">
       <div className="max-w-7xl mx-auto">
@@ -255,32 +350,7 @@ const ExhibitsPage = () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {[
-            { 
-              title: "Михаил Остроградский", 
-              cat: "Математический анализ", 
-              desc: "Один из величайших математиков своего времени. Его работы охватывают анализ, теорию чисел и небесную механику. Он вывел знаменитую формулу Остроградского-Гаусса, которая связывает поток векторного поля через замкнутую поверхность с интегралом от дивергенции этого поля по объему внутри поверхности. Его лекции в Петербурге собирали сотни слушателей.",
-              img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Mikhail_Ostrogradsky.jpg/440px-Mikhail_Ostrogradsky.jpg"
-            },
-            { 
-              title: "Андрей Марков", 
-              cat: "Теория вероятностей", 
-              desc: "Создатель теории цепей Маркова — последовательностей случайных событий, где будущее зависит только от настоящего. Эта концепция стала фундаментом для современной статистики, лингвистики, экономики и даже алгоритмов поисковых систем. Он также внес огромный вклад в теорию чисел и математический анализ.",
-              img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Andrey_Markov.jpg/440px-Andrey_Markov.jpg"
-            },
-            { 
-              title: "Виктор Буняковский", 
-              cat: "Теория чисел", 
-              desc: "Вице-президент Петербургской академии наук. Он прославился выводом фундаментального неравенства, известного как неравенство Коши-Буняковского-Шварца. Его труды по теории вероятностей и демографии заложили основы страхового дела в России. Буняковский был блестящим популяризатором науки и составителем математического словаря.",
-              img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Viktor_Bunyakovsky.jpg/440px-Viktor_Bunyakovsky.jpg"
-            },
-            { 
-              title: "Александр Ляпунов", 
-              cat: "Теория устойчивости", 
-              desc: "Создатель современной теории устойчивости равновесия и движения механических систем. Его методы позволяют определить, вернется ли система в исходное состояние после малого возмущения, что критически важно для авиации, космонавтики и робототехники. Он также доказал центральную предельную теорему теории вероятностей в общем виде.",
-              img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Aleksandr_Lyapunov.jpg/440px-Aleksandr_Lyapunov.jpg"
-            }
-          ].map((item, i) => (
+          {mathematicians.map((item, i) => (
             <motion.div 
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -289,13 +359,24 @@ const ExhibitsPage = () => {
               className="flex flex-col md:flex-row gap-8 p-10 bg-white rounded-sm border border-black/5 hover:shadow-2xl transition-all"
             >
               <div className="w-full md:w-48 h-48 shrink-0 rounded-sm overflow-hidden border border-black/10 bg-stone-100">
-                <img src={item.img} alt={item.title} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
+                <img 
+                  src={item.img} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
+                  referrerPolicy="no-referrer" 
+                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                    e.currentTarget.src = `https://picsum.photos/seed/${item.id}/400/400?grayscale`;
+                  }}
+                />
               </div>
               <div className="flex flex-col justify-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#8B4513] mb-2">{item.cat}</span>
                 <h3 className="font-serif text-2xl mb-4">{item.title}</h3>
-                <p className="text-sm opacity-60 mb-6 font-serif italic leading-relaxed">{item.desc}</p>
-                <button className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-[#8B4513] transition-colors">
+                <p className="text-sm opacity-60 mb-6 font-serif italic leading-relaxed line-clamp-3">{item.desc}</p>
+                <button 
+                  onClick={() => onSelect(item)}
+                  className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-[#8B4513] transition-colors"
+                >
                   Читать биографию <ChevronRight size={14} />
                 </button>
               </div>
@@ -347,18 +428,21 @@ const VisitPage = () => {
 // --- Main App ---
 
 export default function App() {
+  const [selectedMathematician, setSelectedMathematician] = useState<Mathematician | null>(null);
+
   return (
     <Router>
       <div className="min-h-screen selection:bg-[#D4AF37] selection:text-black bg-[#F5F5F0]">
         <Navbar />
         <main>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/exhibits" element={<ExhibitsPage />} />
+            <Route path="/" element={<HomePage onSelect={setSelectedMathematician} />} />
+            <Route path="/exhibits" element={<ExhibitsPage onSelect={setSelectedMathematician} />} />
             <Route path="/visit" element={<VisitPage />} />
           </Routes>
         </main>
         <Footer />
+        <BioModal mathematician={selectedMathematician} onClose={() => setSelectedMathematician(null)} />
       </div>
     </Router>
   );
