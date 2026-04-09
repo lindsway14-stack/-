@@ -9,11 +9,11 @@
 }
 
 :root {
-  --bg: #E4E3E0;
-  --ink: #141414;
-  --line: #141414;
+  --bg: #F5F5F0; /* Теплый белый/кремовый */
+  --ink: #2C2C2C;
+  --accent: #5A5A40; /* Оливковый акцент */
 }
 
 body {
-  @apply bg-[#E4E3E0] text-[#141414] font-sans;
+  @apply bg-[#F5F5F0] text-[#2C2C2C] font-sans;
 }
